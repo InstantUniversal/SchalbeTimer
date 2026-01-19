@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RV Schalbe Atletic Timer</title>
+
+<style>
+body {
+  background:#0a2a66;
+  color:#ffd400;
+  font-family:Arial,sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
+  overflow:hidden;
+}
+
+.timer {
+  width:340px;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+/* 🟡 Hauptbereich */
+.content {
+  background:#ffd400;
+  color:#0a2a66;
+  padding:1.5rem;
+  text-align:center;
+}
+
+h2 {
+  margin:0 0 0.5rem 0;
+}
+
+.time {
+  font-size:4.5rem;
+  font-weight:bold;
+  margin:0.5rem 0;
+}
+
+.status {
+  font-weight:bold;
+  font-size:1.1rem;
+}
+
+.total-time {
+  margin-top:1rem;
+  font-size:0.9rem;
+  font-weight:bold;
+}
+
+button, select {
+  padding:0.6rem;
+  margin:0.3rem;
+  border:none;
+  border-radius:8px;
+  font-size:1rem;
+}
+.start { background:#0a2a66; color:#ffd400; }
+.pause { background:#f1c40f; }
+.reset { background:#e74c3c; color:#fff; }
+
+/* 🔥 FULLSCREEN Motivation Overlay */
+.motivation {
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%) scale(0.6);
+  font-weight:900;
+  font-size:2.8rem;
+  text-align:center;
+  color:#e60000;
+  opacity:0;
+  pointer-events:none;
+  white-space:nowrap;
+  z-index:9999;
+  text-shadow:3px 3px 8px rgba(0,0,0,0.5);
+}
+
+.motivation.show {
+  animation:motivate 2.5s ease-out forwards;
+}
+
+@keyframes motivate {
+  0% {
+    opacity:0;
+    transform:translate(-50%,-50%) scale(0.5) rotate(var(--rot));
+  }
+  25% {
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1) rotate(var(--rot));
+  }
+  70% {
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1.6) rotate(var(--rot));
+  }
+  100% {
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.8) rotate(var(--rot));
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="motivation" id="motivation"></div>
+
+<div class="timer">
+  <div class="content">
+    <h2>RV Schalbe Atletic Timer</h2>
+
+    <select id="interval">
+      <option value="30/30">30 / 30 Sekunden</option>
+      <option value="60/30">60 / 30 Sekunden</option>
+      <option value="60/60" selected>60 / 60 Sekunden</option>
+      <option value="90/90">90 / 90 Sekunden</option>
+    </select>
+
+    <div class="status" id="status">ARBEIT</div>
+    <div class="time" id="display">01:00</div>
+
+    <div>
+      <button class="start" onclick="start()">Start</button>
+      <button class="pause" onclick="pause()">Pause</button>
+      <button class="reset" onclick="reset()">Reset</button>
+    </div>
+
+    <div class="total-time">
+      Gesamtzeit: <span id="total">00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+let work=60, rest=60, timeLeft=60;
+let isWork=true, timer=null, total=0;
+let wakeLock=null;
+
+const slogans=[
+  "Quäl dich du Sau 🐖",
+  "Jetzt wird durchgezogen!",
+  "Schmerz vergeht – Stolz bleibt!",
+  "LOS, NICHT NACHLASSEN!",
+  "Reiß dich zusammen!",
+  "Radhelden keine Redner",
+  "Der Berg lügt nicht!",
+  "Beine schreien – Mund halten!",
+  "Wer bremst, verliert!",
+  "Schweiß ist flüssiger Applaus 💦",
+  "Das tut weh – also wirkt es!",
+  "Heute leidest du freiwillig!",
+  "Keine Ausreden, nur Watt!",
+  "Du wolltest das!",
+  "Pause ist Lava 🔥",
+  "Nach dem Training bist du stolz!"
+];
+
+function fmt(sec){
+  const m=Math.floor(sec/60);
+  const s=sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+function update(){
+  display.textContent=fmt(timeLeft);
+  totalSpan.textContent=fmt(total);
+}
+
+function beep(long=false){
+  const ctx=new AudioContext();
+  const o=ctx.createOscillator();
+  o.frequency.value=long?500:900;
+  o.connect(ctx.destination);
+  o.start();
+  setTimeout(()=>{o.stop();ctx.close()}, long?600:200);
+}
+
+/* 🔋 Wake Lock */
+async function enableWakeLock(){
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+  } catch(e){}
+}
+
+function disableWakeLock(){
+  if(wakeLock){
+    wakeLock.release();
+    wakeLock=null;
+  }
+}
+
+function showMotivation(){
+  const angle = Math.floor(Math.random()*151)-75;
+  motivation.style.setProperty("--rot", angle + "deg");
+  motivation.textContent = slogans[Math.floor(Math.random()*slogans.length)];
+  motivation.classList.remove("show");
+  void motivation.offsetWidth;
+  motivation.classList.add("show");
+}
+
+function load(){
+  [work,rest]=interval.value.split("/").map(Number);
+  timeLeft=work;
+  isWork=true;
+  status.textContent="ARBEIT";
+  update();
+}
+
+function start(){
+  if(timer) return;
+  enableWakeLock();
+
+  timer=setInterval(()=>{
+    timeLeft--;
+    total++;
+
+    if(timeLeft<=5 && timeLeft>0) beep(false);
+
+    if(isWork && timeLeft===Math.floor(work/2)){
+      showMotivation();
+    }
+
+    if(timeLeft===0){
+      beep(true);
+      isWork=!isWork;
+      timeLeft=isWork?work:rest;
+      status.textContent=isWork?"ARBEIT":"PAUSE";
+    }
+
+    update();
+  },1000);
+}
+
+function pause(){
+  clearInterval(timer);
+  timer=null;
+  disableWakeLock();
+}
+
+function reset(){
+  pause();
+  total=0;
+  motivation.textContent="";
+  load();
+}
+
+interval.addEventListener("change", load);
+
+const display=document.getElementById("display");
+const status=document.getElementById("status");
+const motivation=document.getElementById("motivation");
+const totalSpan=document.getElementById("total");
+
+load();
+</script>
+
+</body>
+</html>
