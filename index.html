@@ -52,6 +52,7 @@ h2 {
   margin-top:1rem;
   font-size:0.9rem;
   font-weight:bold;
+  cursor:pointer;
 }
 
 button, select {
@@ -131,7 +132,7 @@ button, select {
       <button class="reset" onclick="reset()">Reset</button>
     </div>
 
-    <div class="total-time">
+    <div class="total-time" id="secretLink">
       Gesamtzeit: <span id="total">00:00</span>
     </div>
   </div>
@@ -141,6 +142,7 @@ button, select {
 let work=60, rest=60, timeLeft=60;
 let isWork=true, timer=null, total=0;
 let wakeLock=null;
+let holdTimer=null;
 
 const slogans=[
   "Quäl dich du Sau 🐖",
@@ -199,9 +201,9 @@ function disableWakeLock(){
 }
 
 function showMotivation(){
-  const angle = Math.floor(Math.random()*151)-75;
-  motivation.style.setProperty("--rot", angle + "deg");
-  motivation.textContent = slogans[Math.floor(Math.random()*slogans.length)];
+  const angle=Math.floor(Math.random()*151)-75;
+  motivation.style.setProperty("--rot",angle+"deg");
+  motivation.textContent=slogans[Math.floor(Math.random()*slogans.length)];
   motivation.classList.remove("show");
   void motivation.offsetWidth;
   motivation.classList.add("show");
@@ -224,10 +226,7 @@ function start(){
     total++;
 
     if(timeLeft<=5 && timeLeft>0) beep(false);
-
-    if(isWork && timeLeft===Math.floor(work/2)){
-      showMotivation();
-    }
+    if(isWork && timeLeft===Math.floor(work/2)) showMotivation();
 
     if(timeLeft===0){
       beep(true);
@@ -235,7 +234,6 @@ function start(){
       timeLeft=isWork?work:rest;
       status.textContent=isWork?"ARBEIT":"PAUSE";
     }
-
     update();
   },1000);
 }
@@ -253,12 +251,31 @@ function reset(){
   load();
 }
 
+/* 🥚 Easter Egg – 2 Sekunden gedrückt halten */
+function startHold(){
+  holdTimer=setTimeout(()=>{
+    window.location.href="tetris.html";
+  },2000);
+}
+
+function cancelHold(){
+  clearTimeout(holdTimer);
+}
+
 interval.addEventListener("change", load);
 
 const display=document.getElementById("display");
 const status=document.getElementById("status");
 const motivation=document.getElementById("motivation");
 const totalSpan=document.getElementById("total");
+const secretLink=document.getElementById("secretLink");
+
+secretLink.addEventListener("mousedown", startHold);
+secretLink.addEventListener("mouseup", cancelHold);
+secretLink.addEventListener("mouseleave", cancelHold);
+secretLink.addEventListener("touchstart", startHold);
+secretLink.addEventListener("touchend", cancelHold);
+secretLink.addEventListener("touchcancel", cancelHold);
 
 load();
 </script>
