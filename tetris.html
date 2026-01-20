@@ -57,7 +57,8 @@ canvas {
   width: 100%;
   padding: 12px 0;
   display: flex;
-  justify-content: space-around;
+  justify-content: center; /* Zentriert die Gruppen horizontal */
+  gap: 40px; /* Abstand zwischen linken Pfeilen und mittlerer Gruppe */
   background: #000;
   border-top: 2px solid #0ff;
 }
@@ -70,14 +71,12 @@ canvas {
 
 /* Links/Rechts immer links */
 .control-left {
-  justify-content: flex-start;
-  flex: 1;
+  justify-content: center;
 }
 
 /* Mittig Drop + Rotate */
 .control-center {
   justify-content: center;
-  flex: 1;
 }
 
 .btn {
@@ -123,9 +122,11 @@ canvas {
 <div id="controls">
   <div class="control-group control-left">
     <div class="btn" id="left">◀</div>
+    <div class="btn" id="right">▶</div>
+  </div>
+  <div class="control-group control-center">
     <div class="btn" id="rotate">⟳</div>
     <div class="btn" id="down">⬇</div>
-    <div class="btn" id="right">▶</div>
   </div>
 </div>
 
@@ -146,13 +147,13 @@ let score = 0, level = 1, lines = 0;
 let dropInterval = 800, lastTime = 0;
 
 const colors = {
-  1: "#00ff00", // I
-  2: "#ff00ff", // T
-  3: "#00ffff", // S
-  4: "#ff0000", // Z
-  5: "#ffa500", // L
-  6: "#0000ff", // J
-  7: "#ffff00"  // O
+  1: "#00ff00",
+  2: "#ff00ff",
+  3: "#00ffff",
+  4: "#ff0000",
+  5: "#ffa500",
+  6: "#0000ff",
+  7: "#ffff00"
 };
 
 const shapes = [
@@ -166,7 +167,6 @@ const shapes = [
   [[1,1],[1,1]]
 ];
 
-/* ===== RESPONSIVE SIZE ===== */
 function resize() {
   const gameHeight = window.innerHeight * 0.7;
   const cellSize = Math.floor(gameHeight / rows);
@@ -278,17 +278,14 @@ function draw() {
   // NEXT
   nctx.fillStyle = "#222";
   nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-
   const m = nextPiece.matrix;
   const size = nextCanvas.width / 4;
   const ox = Math.floor((4 - m[0].length) / 2);
   const oy = Math.floor((4 - m.length) / 2);
-
   drawMatrix(m, {x:ox, y:oy}, nctx, size, nextPiece.type);
 
   scoreEl.textContent = score;
   levelEl.textContent = level;
-
   const hs = Math.max(score, Number(localStorage.getItem("tetrisHS") || 0));
   localStorage.setItem("tetrisHS", hs);
   highscoreEl.textContent = hs;
