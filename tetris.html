@@ -27,7 +27,7 @@ body {
   align-items: flex-start;
   justify-content: center;
   gap: 12px;
-  height: 70vh;              /* 🔑 70 % Displayhöhe */
+  height: 70vh;
   margin-top: 8px;
 }
 
@@ -37,7 +37,7 @@ canvas {
   display: block;
 }
 
-/* ===== NEXT / INFO ===== */
+/* ===== SIDE / NEXT ===== */
 #side {
   display: flex;
   flex-direction: column;
@@ -90,7 +90,6 @@ canvas {
 <body>
 
 <div id="game-area">
-  <!-- NEXT + INFO LINKS -->
   <div id="side">
     <div>Next</div>
     <canvas id="next"></canvas>
@@ -99,11 +98,9 @@ canvas {
     <div>High: <span id="highscore">0</span></div>
   </div>
 
-  <!-- GAME -->
   <canvas id="game"></canvas>
 </div>
 
-<!-- TOUCH CONTROLS -->
 <div id="controls">
   <div class="control-group">
     <div class="btn" id="left">◀</div>
@@ -133,19 +130,24 @@ let score = 0, level = 1, lines = 0;
 let dropInterval = 800, lastTime = 0;
 
 const colors = {
-  1:"#0f0",2:"#f0f",3:"#0ff",4:"#f00",
-  5:"#fa0",6:"#00f",7:"#ff0"
+  1: "#00ff00", // I
+  2: "#ff00ff", // T
+  3: "#00ffff", // S
+  4: "#ff0000", // Z
+  5: "#ffa500", // L
+  6: "#0000ff", // J
+  7: "#ffff00"  // O
 };
 
 const shapes = [
   [],
-  [[1,1,1,1]],
-  [[1,1,1],[0,1,0]],
-  [[1,1,0],[0,1,1]],
-  [[0,1,1],[1,1,0]],
-  [[1,1,1],[1,0,0]],
-  [[1,1,1],[0,0,1]],
-  [[1,1],[1,1]]
+  [[1,1,1,1]],               // I
+  [[1,1,1],[0,1,0]],         // T
+  [[1,1,0],[0,1,1]],         // S
+  [[0,1,1],[1,1,0]],         // Z
+  [[1,1,1],[1,0,0]],         // L
+  [[1,1,1],[0,0,1]],         // J
+  [[1,1],[1,1]]              // O
 ];
 
 /* ===== RESPONSIVE SIZE ===== */
@@ -162,117 +164,147 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-function cell() { return canvas.width / cols; }
+function cellSize() {
+  return canvas.width / cols;
+}
 
 function newPiece() {
-  const t = Math.floor(Math.random()*7)+1;
-  return {x:3,y:0,matrix:shapes[t],type:t};
+  const type = Math.floor(Math.random() * 7) + 1;
+  return { x: 3, y: 0, matrix: shapes[type], type };
 }
 
 let nextPiece = newPiece();
-let piece = getNext();
+let piece = getNextPiece();
 
-function getNext() {
+function getNextPiece() {
   const p = nextPiece;
   nextPiece = newPiece();
   return p;
 }
 
 function collide() {
-  return piece.matrix.some((r,y)=>r.some((v,x)=>
-    v && (board[y+piece.y]?.[x+piece.x] !== 0 || y+piece.y >= rows)
-  ));
+  return piece.matrix.some((row, y) =>
+    row.some((val, x) =>
+      val && (
+        board[y + piece.y]?.[x + piece.x] !== 0 ||
+        y + piece.y >= rows ||
+        x + piece.x < 0 ||
+        x + piece.x >= cols
+      )
+    )
+  );
 }
 
 function merge() {
-  piece.matrix.forEach((r,y)=>r.forEach((v,x)=>{
-    if(v) board[y+piece.y][x+piece.x] = piece.type;
-  }));
+  piece.matrix.forEach((row, y) =>
+    row.forEach((val, x) => {
+      if (val) board[y + piece.y][x + piece.x] = piece.type;
+    })
+  );
 }
 
 function rotate() {
   const m = piece.matrix;
-  const r = m[0].map((_,i)=>m.map(row=>row[i]).reverse());
+  const rotated = m[0].map((_, i) => m.map(r => r[i]).reverse());
   const old = piece.matrix;
-  piece.matrix = r;
-  if(collide()) piece.matrix = old;
+  piece.matrix = rotated;
+  if (collide()) piece.matrix = old;
 }
 
 function drop() {
   piece.y++;
-  if(collide()) {
+  if (collide()) {
     piece.y--;
     merge();
     clearLines();
-    piece = getNext();
+    piece = getNextPiece();
   }
 }
 
 function hardDrop() {
-  while(!collide()) piece.y++;
+  while (!collide()) piece.y++;
   piece.y--;
   drop();
 }
 
 function clearLines() {
-  for(let y=rows-1;y>=0;y--) {
-    if(board[y].every(v=>v)) {
-      board.splice(y,1);
+  for (let y = rows - 1; y >= 0; y--) {
+    if (board[y].every(v => v !== 0)) {
+      board.splice(y, 1);
       board.unshift(Array(cols).fill(0));
       score += 10;
       lines++;
-      if(lines >= level*5) {
+      if (lines >= level * 5) {
         level++;
-        dropInterval = Math.max(150, dropInterval-100);
+        dropInterval = Math.max(150, dropInterval - 100);
       }
       y++;
     }
   }
 }
 
-function drawMatrix(m,o,c,s,col=null) {
-  m.forEach((r,y)=>r.forEach((v,x)=>{
-    if(v) {
-      c.fillStyle = col || colors[v];
-      c.fillRect((x+o.x)*s,(y+o.y)*s,s-1,s-1);
-    }
-  }));
+function drawMatrix(matrix, offset, context, size, typeOverride = null) {
+  matrix.forEach((row, y) =>
+    row.forEach((val, x) => {
+      if (val) {
+        const type = typeOverride ?? val;
+        context.fillStyle = colors[type];
+        context.fillRect(
+          (x + offset.x) * size,
+          (y + offset.y) * size,
+          size - 1,
+          size - 1
+        );
+      }
+    })
+  );
 }
 
 function draw() {
-  const s = cell();
-  ctx.fillStyle="#222";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  drawMatrix(board,{x:0,y:0},ctx,s);
-  drawMatrix(piece.matrix,piece,ctx,s);
+  const s = cellSize();
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawMatrix(board, {x:0, y:0}, ctx, s);
+  drawMatrix(piece.matrix, piece, ctx, s, piece.type);
 
-  nctx.fillStyle="#222";
-  nctx.fillRect(0,0,nextCanvas.width,nextCanvas.height);
-  drawMatrix(nextPiece.matrix,{x:1,y:1},nctx,nextCanvas.width/4,colors[nextPiece.type]);
+  // NEXT
+  nctx.fillStyle = "#222";
+  nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
 
-  scoreEl.textContent=score;
-  levelEl.textContent=level;
-  highscoreEl.textContent=Math.max(score, +localStorage.getItem("hs")||0);
+  const m = nextPiece.matrix;
+  const size = nextCanvas.width / 4;
+  const ox = Math.floor((4 - m[0].length) / 2);
+  const oy = Math.floor((4 - m.length) / 2);
+
+  drawMatrix(m, {x:ox, y:oy}, nctx, size, nextPiece.type);
+
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+
+  const hs = Math.max(score, Number(localStorage.getItem("tetrisHS") || 0));
+  localStorage.setItem("tetrisHS", hs);
+  highscoreEl.textContent = hs;
 }
 
-function update(t=0) {
-  if(t-lastTime > dropInterval) {
+function update(time = 0) {
+  if (time - lastTime > dropInterval) {
     drop();
-    lastTime = t;
+    lastTime = time;
   }
   draw();
   requestAnimationFrame(update);
 }
 
-/* TOUCH */
-const bind=(id,fn)=>document.getElementById(id)
-  .addEventListener("touchstart",e=>{e.preventDefault();fn();});
+/* TOUCH CONTROLS */
+const bind = (id, fn) =>
+  document.getElementById(id)
+    .addEventListener("touchstart", e => { e.preventDefault(); fn(); });
 
-bind("left",()=>{piece.x--;if(collide())piece.x++;});
-bind("right",()=>{piece.x++;if(collide())piece.x--;});
-bind("rotate",rotate);
-bind("down",drop);
-bind("drop",hardDrop);
+bind("left", () => { piece.x--; if (collide()) piece.x++; });
+bind("right", () => { piece.x++; if (collide()) piece.x--; });
+bind("rotate", rotate);
+bind("down", drop);
+bind("drop", hardDrop);
 
 update();
 </script>
