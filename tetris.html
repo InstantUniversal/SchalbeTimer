@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>Tetris</title>
 
 <style>
@@ -22,17 +22,13 @@ body {
 }
 
 /* ===== GAME AREA ===== */
-#game-wrapper {
+#game-area {
   display: flex;
   align-items: flex-start;
+  justify-content: center;
   gap: 12px;
-  margin-top: 10px;
-}
-
-/* INFO */
-#info {
-  font-size: 0.9rem;
-  min-width: 90px;
+  height: 70vh;              /* 🔑 70 % Displayhöhe */
+  margin-top: 8px;
 }
 
 canvas {
@@ -41,11 +37,24 @@ canvas {
   display: block;
 }
 
-/* ===== TOUCH CONTROLS ===== */
+/* ===== NEXT / INFO ===== */
+#side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.85rem;
+  min-width: 70px;
+}
+
+#next {
+  margin-top: 6px;
+}
+
+/* ===== CONTROLS ===== */
 #controls {
   margin-top: auto;
-  padding: 10px 0 14px;
   width: 100%;
+  padding: 12px 0 16px;
   display: flex;
   justify-content: space-around;
   background: #000;
@@ -58,13 +67,13 @@ canvas {
 }
 
 .btn {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: rgba(0,255,255,0.15);
   border: 2px solid #0ff;
   color: #0ff;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -75,28 +84,22 @@ canvas {
 .btn:active {
   background: rgba(0,255,255,0.4);
 }
-
-/* ===== RESPONSIVE SCALING ===== */
-@media (max-width: 480px) {
-  #info {
-    font-size: 0.8rem;
-  }
-}
 </style>
 </head>
 
 <body>
 
-<div id="game-wrapper">
-  <div id="info">
-    <h3>RESIDENTRIS</h3>
-    <div>Score: <span id="score">0</span></div>
-    <div>Level: <span id="level">1</span></div>
-    <div>Highscore: <span id="highscore">0</span></div>
-    <div>Next:</div>
+<div id="game-area">
+  <!-- NEXT + INFO LINKS -->
+  <div id="side">
+    <div>Next</div>
     <canvas id="next"></canvas>
+    <div style="margin-top:8px">Score: <span id="score">0</span></div>
+    <div>Level: <span id="level">1</span></div>
+    <div>High: <span id="highscore">0</span></div>
   </div>
 
+  <!-- GAME -->
   <canvas id="game"></canvas>
 </div>
 
@@ -124,7 +127,7 @@ const levelEl = document.getElementById("level");
 const highscoreEl = document.getElementById("highscore");
 
 const rows = 20, cols = 10;
-let board = Array.from({ length: rows }, () => Array(cols).fill(0));
+let board = Array.from({length: rows}, () => Array(cols).fill(0));
 
 let score = 0, level = 1, lines = 0;
 let dropInterval = 800, lastTime = 0;
@@ -145,26 +148,30 @@ const shapes = [
   [[1,1],[1,1]]
 ];
 
+/* ===== RESPONSIVE SIZE ===== */
 function resize() {
-  const maxWidth = Math.min(window.innerWidth * 0.55, 260);
-  canvas.width = maxWidth;
-  canvas.height = maxWidth * 2;
+  const gameHeight = window.innerHeight * 0.7;
+  const cellSize = Math.floor(gameHeight / rows);
 
-  nextCanvas.width = maxWidth / 3;
-  nextCanvas.height = maxWidth / 3;
+  canvas.height = cellSize * rows;
+  canvas.width  = cellSize * cols;
+
+  nextCanvas.width  = cellSize * 4;
+  nextCanvas.height = cellSize * 4;
 }
 window.addEventListener("resize", resize);
 resize();
 
 function cell() { return canvas.width / cols; }
 
-let nextPiece = newPiece();
-let piece = getNext();
-
 function newPiece() {
   const t = Math.floor(Math.random()*7)+1;
   return {x:3,y:0,matrix:shapes[t],type:t};
 }
+
+let nextPiece = newPiece();
+let piece = getNext();
+
 function getNext() {
   const p = nextPiece;
   nextPiece = newPiece();
