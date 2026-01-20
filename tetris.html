@@ -19,6 +19,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
 }
 
 /* ===== GAME AREA ===== */
@@ -43,7 +44,7 @@ canvas {
   flex-direction: column;
   align-items: center;
   font-size: 0.85rem;
-  min-width: 70px;
+  min-width: 80px;
 }
 
 #next {
@@ -52,20 +53,31 @@ canvas {
 
 /* ===== CONTROLS ===== */
 #controls {
-  margin-top: auto;
+  margin-top: 12px;
   width: 100%;
-  padding: 12px 0 16px;
+  padding: 12px 0;
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  justify-content: space-around;
   background: #000;
   border-top: 2px solid #0ff;
 }
 
 .control-group {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
+}
+
+/* Links/Rechts immer links */
+.control-left {
+  justify-content: flex-start;
+  flex: 1;
+}
+
+/* Mittig Drop + Rotate */
+.control-center {
+  justify-content: center;
+  flex: 1;
 }
 
 .btn {
@@ -88,7 +100,6 @@ canvas {
 }
 
 @media (max-width: 400px) {
-  #controls { gap: 10px; }
   .btn { width: 48px; height: 48px; font-size: 1.2rem; }
 }
 </style>
@@ -110,11 +121,11 @@ canvas {
 
 <!-- TOUCH CONTROLS -->
 <div id="controls">
-  <div class="control-group">
+  <div class="control-group control-left">
     <div class="btn" id="left">◀</div>
     <div class="btn" id="right">▶</div>
   </div>
-  <div class="control-group">
+  <div class="control-group control-center">
     <div class="btn" id="rotate">⟳</div>
     <div class="btn" id="down">⬇</div>
   </div>
@@ -148,13 +159,13 @@ const colors = {
 
 const shapes = [
   [],
-  [[1,1,1,1]],               
-  [[1,1,1],[0,1,0]],         
-  [[1,1,0],[0,1,1]],         
-  [[0,1,1],[1,1,0]],         
-  [[1,1,1],[1,0,0]],         
-  [[1,1,1],[0,0,1]],         
-  [[1,1],[1,1]]              
+  [[1,1,1,1]],
+  [[1,1,1],[0,1,0]],
+  [[1,1,0],[0,1,1]],
+  [[0,1,1],[1,1,0]],
+  [[1,1,1],[1,0,0]],
+  [[1,1,1],[0,0,1]],
+  [[1,1],[1,1]]
 ];
 
 /* ===== RESPONSIVE SIZE ===== */
