@@ -123,7 +123,7 @@ button, select {
       <option value="90/90">90 / 90 Sekunden</option>
     </select>
 
-    <div class="status" id="status">ARBEIT</div>
+    <div class="status" id="status">Quäl dich!</div>
     <div class="time" id="display">01:00</div>
 
     <div>
@@ -213,7 +213,7 @@ function load(){
   [work,rest]=interval.value.split("/").map(Number);
   timeLeft=work;
   isWork=true;
-  status.textContent="ARBEIT";
+  status.textContent="Quäl dich!";
   update();
 }
 
@@ -232,7 +232,7 @@ function start(){
       beep(true);
       isWork=!isWork;
       timeLeft=isWork?work:rest;
-      status.textContent=isWork?"ARBEIT":"PAUSE";
+      status.textContent=isWork?"Quäl dich!":"Gönn dir";
     }
     update();
   },1000);
