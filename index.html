@@ -248,7 +248,7 @@ function start(){
     if(timeLeft === 0){
       isWork = !isWork;
       timeLeft = isWork ? work : rest;
-      status.textContent = isWork ? ((lang==="de") ? "Quäl dich!" : "Work") : ((lang==="de") ? "Gönn dir" : "Rest");
+      status.textContent = isWork ? ((lang==="de") ? "Quäl dir!" : "Work") : ((lang==="de") ? "Gönn dich" : "Rest");
       if(isWork){
         halfTime = Math.floor(work/2);
         motivationShown = false;
