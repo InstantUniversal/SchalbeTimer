@@ -81,10 +81,12 @@ button, select { padding:0.6rem; margin:0.3rem; border:none; border-radius:8px; 
     <option value="90/90">90 / 90 Sekunden</option>
   </select>
   
+  <p>
+  
   <div class="status" id="status"></div>
   <div class="time" id="display">01:00</div>
   <div class="total-time" id="totalDisplay">Gesamtzeit: <span id="total">00:00</span></div>
-
+  
   <div>
     <button class="start" id="btnStart">Start</button>
     <button class="pause" id="btnPause">Pause</button>
@@ -161,7 +163,7 @@ function showMotivation(){
 // Audio-Funktion für Pieptöne
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-function beep(duration=100, frequency=1000, volume=0.3){
+function beep(duration=150, frequency=1000, volume=0.3){
   const oscillator = audioCtx.createOscillator();
   const gainNode = audioCtx.createGain();
   oscillator.connect(gainNode);
@@ -197,19 +199,17 @@ function start(){
       motivationShown = true;
     }
 
-    // Pieptöne in den letzten 5 Sekunden
+    // Pieptöne in den letzten 5 Sekunden – EIN Ton pro Sekunde
     if(isWork && timeLeft > 0 && timeLeft <= 5){
-      // vier kurze Töne pro Sekunde
-      for(let i=0;i<4;i++){
-        setTimeout(()=>beep(50, 1200, 0.3), i*200);
-      }
+      beep(150, 1000, 0.3); // kurzer Bep
     }
 
-    // Intervallende längerer Ton
+    // Intervallende – längerer Ton
     if(isWork && timeLeft === 0){
-      beep(400, 800, 0.5); // langer Piepton
+      beep(400, 1000, 0.5); // langer Beeep
     }
 
+    // Wechsel zwischen Arbeit und Pause
     if(timeLeft === 0){
       isWork = !isWork;
       timeLeft = isWork ? work : rest;
